@@ -1,6 +1,5 @@
 import pygame, os, sys
 import random
-import math
 from pygame.locals import *
 
 class Point:
@@ -31,7 +30,6 @@ BLACK = pygame.Color(0,0,0)
 WHITE = pygame.Color(255,255,255)
 GREY = pygame.Color(200,200,200)
 RED = pygame.Color(255,0,0)
-GREEN = pygame.Color(0,255,0)
 BLUE = pygame.Color(0,0,255)
 
 FPS = 60
@@ -49,7 +47,10 @@ def calculateDisplacementVector(p1:Point, p2:Point):
   return [p1.pos[0]-p2.pos[0], p1.pos[1]-p2.pos[1]]
 
 def calculateVectorNorm(vect:list):
-  return int((vect[0]**2+vect[1]**2)**(1/2))
+  r = (vect[0]**2+vect[1]**2)**(1/2)
+  if r == 0:
+    return 0.0001
+  return r
 
 def calculateElectricForceValue(p1:Point, p2:Point):
   d = calculateVectorNorm(calculateDisplacementVector(p1,p2))
@@ -97,6 +98,17 @@ while True:
         point1.velocity[0] += directionNormalized[0]*forceVal/MASS
         point1.velocity[1] += directionNormalized[1]*forceVal/MASS
 
+        if (calculateVectorNorm(calculateDisplacementVector(point1, point2))-point1.radius-point2.radius <= 0):
+          impactDirection = [0, 0]
+          impactDirection[0] = calculateDisplacementVector(point1, point2)[0]/calculateVectorNorm(calculateDisplacementVector(point1, point2))
+          impactDirection[1] = calculateDisplacementVector(point1, point2)[1]/calculateVectorNorm(calculateDisplacementVector(point1, point2))
+
+          point1.velocity[0] *= -0.9*impactDirection[0]
+          point1.velocity[1] *= -0.9*impactDirection[1]
+
+          point2.velocity[0] *= 0.9*impactDirection[0]
+          point2.velocity[1] *= 0.9*impactDirection[1]
+
   for event in pygame.event.get():
     if (event.type == QUIT):
       pygame.quit()
@@ -108,10 +120,10 @@ while True:
     else:
       mouse_button = pygame.mouse.get_pressed()
       if (mouse_button[0]):
-        newPoint = Point(BLUE, random.randint(0, WIDTH), random.randint(0, HEIGHT), -3)
+        newPoint = Point(BLUE, random.randint(0, WIDTH), random.randint(0, HEIGHT), -10)
         points.append(newPoint)
       if (mouse_button[2]):
-        newPoint = Point(RED , random.randint(0, WIDTH), random.randint(0, HEIGHT), +3)
+        newPoint = Point(RED , random.randint(0, WIDTH), random.randint(0, HEIGHT), +10)
         points.append(newPoint)
 
   pygame.display.update()
